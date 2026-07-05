@@ -1,3 +1,15 @@
+
+// 모바일 브라우저 주소창이 열리고 닫혀도 화면을 한 페이지 높이로 유지합니다.
+function syncViewportHeight() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${Math.round(viewportHeight)}px`);
+}
+
+syncViewportHeight();
+window.addEventListener('resize', syncViewportHeight);
+window.addEventListener('orientationchange', () => setTimeout(syncViewportHeight, 160));
+window.visualViewport?.addEventListener('resize', syncViewportHeight);
+
 const animals = {
   bear: {
     badge: '숲 친구',
