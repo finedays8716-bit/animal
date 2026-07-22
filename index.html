@@ -5,80 +5,99 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="theme-color" content="#173c2d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>우리 숲에 찾아온 멸종위기동물 친구들</title>
-  <link rel="stylesheet" href="style.css?v=20260705-2315" />
+  <title>멸종위기동물 AR 서식지 관찰</title>
+  <link rel="stylesheet" href="style.css?v=20260720-habitat" />
+  <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.6.0/dist/aframe-master.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.8/aframe/build/aframe-ar.js"></script>
 </head>
 <body>
-  <div id="app-shell">
-    <div id="renderer-shell" aria-hidden="true"></div>
-
-    <section id="splash-screen" class="screen-card">
-      <div class="badge">AR 숲 생태 체험</div>
-      <h1>우리 숲에<br>누구를 초대할까요?</h1>
-      <p class="lead">동물 한 마리를 고른 뒤, AR을 시작해서<br>내가 만든 숲 위 원하는 자리에 놓아 보세요.</p>
-
-      <div id="support-note" class="support-note">기기를 확인하는 중이에요…</div>
-
-      <div id="animal-grid" class="animal-grid" role="list" aria-label="동물 선택">
-        <button class="animal-tile selected" data-animal="bear" type="button">
-          <img src="assets/animals/bear-thumb.png" alt="반달가슴곰" />
-          <span>반달가슴곰</span>
-        </button>
-        <button class="animal-tile" data-animal="otter" type="button">
-          <img src="assets/animals/otter-thumb.png" alt="수달" />
-          <span>수달</span>
-        </button>
-        <button class="animal-tile" data-animal="goral" type="button">
-          <img src="assets/animals/goral-thumb.png" alt="산양" />
-          <span>산양</span>
-        </button>
-        <button class="animal-tile" data-animal="spoonbill" type="button">
-          <img src="assets/animals/spoonbill-thumb.png" alt="저어새" />
-          <span>저어새</span>
-        </button>
-      </div>
-
-      <button id="enter-ar-button" class="primary-button" type="button">선택한 동물과 AR 시작하기</button>
-      <p class="small-note">권장 환경: ARCore 지원 안드로이드 휴대폰/태블릿 + Chrome</p>
+  <main id="app-shell">
+    <section id="start-screen" class="overlay-card" aria-live="polite">
+      <div class="leaf-mark">🦦</div>
+      <p class="eyebrow">AR 서식지 관찰</p>
+      <h1>작품에 붙인 동물 표찰을<br />카메라로 비춰 보세요</h1>
+      <p class="intro-copy">반달가슴곰, 수달, 산양, 저어새 중<br />작품에 붙인 AR 표찰을 비추면 그 동물만 나타나요.</p>
+      <button id="start-button" type="button">카메라로 보기 시작</button>
+      <p class="tiny-note">표찰의 검은 네모가 화면에 잘 보이도록, 밝은 곳에서 조금 떨어져 비춰 주세요.</p>
     </section>
 
-    <header id="hud" class="hidden" aria-live="polite">
-      <div class="hud-title">🌿 우리 숲에 초대한 동물</div>
-      <div class="hud-main">
-        <strong id="selected-name">반달가슴곰</strong>
-        <span id="status-text">숲의 바닥이나 작품 받침대를 천천히 비춰 주세요.</span>
-      </div>
+    <header id="hud" aria-live="polite">
+      <div class="hud-title"><span class="hud-leaf">🌿</span> 멸종위기동물 서식지 관찰</div>
+      <div id="status-pill">카메라를 허용하고 작품에 붙인 AR 표찰을 비춰 주세요.</div>
     </header>
 
-    <section id="info-panel" class="info-panel hidden" aria-live="polite">
-      <div class="info-head">
-        <span id="info-badge" class="info-badge">숲 친구</span>
-        <button id="close-info" class="mini-button" type="button" aria-label="닫기">×</button>
-      </div>
-      <h2 id="info-name">반달가슴곰</h2>
-      <p id="info-message">숲을 깨끗하게 지켜 주세요.</p>
-      <p id="info-question" class="question-box">이 동물이 살기 좋은 숲은 어떤 모습일까요?</p>
+    <button id="help-button" class="round-button" type="button" aria-label="사용 방법 보기">?</button>
+
+    <section id="help-panel" class="side-panel hidden" aria-label="사용 방법">
+      <button class="panel-close" type="button" aria-label="닫기">×</button>
+      <h2>이렇게 놀아요</h2>
+      <ol>
+        <li>동물 한 마리를 정하고, 그 동물이 살 서식지를 그림이나 재활용품으로 꾸며요.</li>
+        <li>해당 동물의 AR 표찰을 작품 앞에 붙여요.</li>
+        <li>휴대폰이나 태블릿으로 표찰을 비추면 그 동물이 나타나요.</li>
+      </ol>
+      <p class="panel-tip">동물이 흔들리면 카메라를 조금 멀리하고, 표찰이 구겨지지 않도록 평평하게 붙여 보세요.</p>
     </section>
 
-    <section id="selector-sheet" class="selector-sheet hidden" aria-label="동물 바꾸기">
-      <div class="sheet-header">
-        <h2>다른 동물로 바꿔 볼까요?</h2>
-        <button id="close-sheet" class="mini-button" type="button" aria-label="닫기">×</button>
-      </div>
-      <div id="sheet-grid" class="animal-grid compact" role="list"></div>
+    <section id="animal-card" class="animal-card hidden" aria-live="polite">
+      <button id="animal-close" class="panel-close" type="button" aria-label="동물 설명 닫기">×</button>
+      <p id="animal-badge" class="animal-badge">숲 친구</p>
+      <h2 id="animal-name">반달가슴곰</h2>
+      <p id="animal-message"></p>
+      <p id="animal-question" class="question-box"></p>
     </section>
 
-    <footer id="bottom-bar" class="hidden">
-      <button id="place-button" class="primary-button small" type="button">여기에 놓기</button>
-      <div class="bottom-row">
-        <button id="change-animal" class="secondary-button" type="button">동물 바꾸기</button>
-        <button id="replace-button" class="secondary-button" type="button">다시 놓기</button>
-      </div>
-    </footer>
+    <div id="scan-guide" class="scan-guide">⬇ 작품에 붙인 AR 표찰을 화면 가운데에 맞춰 보세요 ⬇</div>
 
-    <button id="tap-target" class="tap-target hidden" type="button" aria-label="화면을 눌러 동물 놓기"></button>
-  </div>
+    <a-scene
+      id="ar-scene"
+      embedded
+      vr-mode-ui="enabled: false"
+      renderer="antialias: true; alpha: true; precision: mediump; logarithmicDepthBuffer: true;"
+      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; patternRatio: 0.50; maxDetectionRate: 30; canvasWidth: 1280; canvasHeight: 720;">
 
-  <script type="module" src="app.js?v=20260705-2315"></script>
+      <a-assets>
+        <img id="img-bear" src="assets/animals/bear.png">
+        <img id="img-otter" src="assets/animals/otter.png">
+        <img id="img-goral" src="assets/animals/goral.png">
+        <img id="img-spoonbill" src="assets/animals/spoonbill.png">
+      </a-assets>
+
+      <a-marker id="marker-bear" type="pattern" url="assets/markers/bear.patt" emitevents="true" smooth="true" smooth-count="8" smooth-tolerance="0.015" smooth-threshold="3">
+        <a-entity position="0 0.3 0">
+          <a-plane class="clickable" data-animal="bear" src="#img-bear" width="1.18" height="1.0" position="0 0.55 0" material="transparent: true; alphaTest: 0.05; side: double" animation__float="property: position; from: 0 0.52 0; to: 0 0.60 0; dir: alternate; dur: 1200; loop: true; easing: easeInOutSine"></a-plane>
+          <a-circle radius="0.38" position="0 0.03 0" rotation="-90 0 0" material="color: #000; opacity: 0.18"></a-circle>
+          <a-text value="반달가슴곰" align="center" width="2.8" color="#173c2d" position="0 -0.14 0"></a-text>
+        </a-entity>
+      </a-marker>
+
+      <a-marker id="marker-otter" type="pattern" url="assets/markers/otter.patt" emitevents="true" smooth="true" smooth-count="8" smooth-tolerance="0.015" smooth-threshold="3">
+        <a-entity position="0 0.26 0">
+          <a-plane class="clickable" data-animal="otter" src="#img-otter" width="0.72" height="1.0" position="0 0.50 0" material="transparent: true; alphaTest: 0.05; side: double" animation__wiggle="property: rotation; from: 0 0 -2; to: 0 0 2; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-plane>
+          <a-circle radius="0.27" position="0 0.03 0" rotation="-90 0 0" material="color: #000; opacity: 0.18"></a-circle>
+          <a-text value="수달" align="center" width="2.8" color="#173c2d" position="0 -0.14 0"></a-text>
+        </a-entity>
+      </a-marker>
+
+      <a-marker id="marker-goral" type="pattern" url="assets/markers/goral.patt" emitevents="true" smooth="true" smooth-count="8" smooth-tolerance="0.015" smooth-threshold="3">
+        <a-entity position="0 0.32 0">
+          <a-plane class="clickable" data-animal="goral" src="#img-goral" width="0.86" height="1.0" position="0 0.52 0" material="transparent: true; alphaTest: 0.05; side: double" animation__hop="property: position; from: 0 0.50 0; to: 0 0.58 0; dir: alternate; dur: 1100; loop: true; easing: easeInOutSine"></a-plane>
+          <a-circle radius="0.28" position="0 0.03 0" rotation="-90 0 0" material="color: #000; opacity: 0.18"></a-circle>
+          <a-text value="산양" align="center" width="2.8" color="#173c2d" position="0 -0.14 0"></a-text>
+        </a-entity>
+      </a-marker>
+
+      <a-marker id="marker-spoonbill" type="pattern" url="assets/markers/spoonbill.patt" emitevents="true" smooth="true" smooth-count="8" smooth-tolerance="0.015" smooth-threshold="3">
+        <a-entity position="0 0.28 0">
+          <a-plane class="clickable" data-animal="spoonbill" src="#img-spoonbill" width="0.60" height="1.0" position="0 0.57 0" material="transparent: true; alphaTest: 0.05; side: double" animation__tilt="property: rotation; from: 0 0 -1.5; to: 0 0 1.5; dir: alternate; dur: 1000; loop: true; easing: easeInOutSine"></a-plane>
+          <a-circle radius="0.22" position="0 0.03 0" rotation="-90 0 0" material="color: #000; opacity: 0.14"></a-circle>
+          <a-text value="저어새" align="center" width="2.8" color="#173c2d" position="0 -0.14 0"></a-text>
+        </a-entity>
+      </a-marker>
+
+      <a-entity camera cursor="rayOrigin: mouse" raycaster="objects: .clickable; far: 10"></a-entity>
+    </a-scene>
+  </main>
+  <script src="app.js?v=20260720-habitat"></script>
 </body>
 </html>
