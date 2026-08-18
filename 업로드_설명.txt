@@ -1,0 +1,1 @@
+기존+새 영상 보존형 랜덤 버전입니다. index.html, startscreen-20260818.css, startscreen-20260818.js, assets/videos/* 를 업로드하세요.

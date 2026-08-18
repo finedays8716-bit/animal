@@ -8,9 +8,36 @@ window.visualViewport?.addEventListener('resize', syncViewportHeight);
 window.addEventListener('orientationchange', () => setTimeout(syncViewportHeight, 250));
 
 const animals = {
-  bear: { name:'반달가슴곰', image:'assets/animals/bear.png', video:'assets/videos/bear.webm', message:'반달가슴곰이 살 숲 위를 터치해 보세요.' },
-  deer: { name:'노루', image:'assets/animals/deer.png', video:'assets/videos/deer.webm', message:'노루가 쉴 풀밭이나 숲 위를 터치해 보세요.' },
-  otter: { name:'수달', image:'assets/animals/otter.png', video:'assets/videos/otter.webm', message:'수달이 살 물가나 강 위를 터치해 보세요.' }
+  bear: {
+    name:'반달가슴곰',
+    image:'assets/animals/bear.png',
+    videos:[
+      'assets/videos/bear_old.webm?v=20260818-randommix',
+      'assets/videos/bear_new.webm?v=20260818-randommix'
+    ],
+    size:46,
+    message:'반달가슴곰이 살 숲 위를 터치해 보세요.'
+  },
+  deer: {
+    name:'노루',
+    image:'assets/animals/deer.png',
+    videos:[
+      'assets/videos/deer_old.webm?v=20260818-randommix',
+      'assets/videos/deer_new.webm?v=20260818-randommix'
+    ],
+    size:34,
+    message:'노루가 쉴 풀밭이나 숲 위를 터치해 보세요.'
+  },
+  otter: {
+    name:'수달',
+    image:'assets/animals/otter.png',
+    videos:[
+      'assets/videos/otter_old.webm?v=20260818-randommix',
+      'assets/videos/otter_new.webm?v=20260818-randommix'
+    ],
+    size:36,
+    message:'수달이 살 물가나 강 위를 터치해 보세요.'
+  }
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -29,19 +56,34 @@ let currentMode = 'image';
 let scale = 1;
 let stream = null;
 let cameraStarted = false;
+let currentVideoSrc = '';
 
 function setMessage(text){ message.textContent = text; }
+
+function applyDefaultSize(){
+  const base = animals[currentAnimal]?.size || 42;
+  stage.style.width = `${base * scale}vw`;
+}
+
+function pickRandomVideo(key){
+  const list = animals[key]?.videos || [];
+  if(!list.length) return '';
+  const index = Math.floor(Math.random() * list.length);
+  return list[index];
+}
 
 function setAnimal(key){
   currentAnimal = key;
   const data = animals[key];
+  currentVideoSrc = '';
+  applyDefaultSize();
   animalImage.src = data.image;
   animalImage.alt = data.name;
   animalVideo.pause();
   animalVideo.removeAttribute('src');
   animalVideo.load();
-  stage.classList.remove('video-mode');
-  if(currentMode === 'video') prepareVideo();
+  stage.classList.toggle('video-mode', currentMode === 'video');
+  if(currentMode === 'video') prepareVideo(true);
   setMessage(`${data.name} 선택됨. ${data.message}`);
   document.querySelectorAll('.animal-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.animal === key));
 }
@@ -50,9 +92,9 @@ function setMode(mode){
   currentMode = mode;
   document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.mode === mode));
   if(mode === 'video'){
-    prepareVideo();
+    prepareVideo(true);
     stage.classList.add('video-mode');
-    setMessage('영상 모드입니다. 버벅이면 사진 모드로 바꾸세요.');
+    setMessage('영상 모드입니다. 기존 영상과 새 영상 중 하나가 랜덤으로 재생됩니다. 버벅이면 사진 모드로 바꾸세요.');
   } else {
     animalVideo.pause();
     stage.classList.remove('video-mode');
@@ -60,10 +102,13 @@ function setMode(mode){
   }
 }
 
-function prepareVideo(){
+function prepareVideo(forceRandom = false){
   const data = animals[currentAnimal];
-  if(animalVideo.getAttribute('src') !== data.video){
-    animalVideo.src = data.video;
+  if(forceRandom || !currentVideoSrc){
+    currentVideoSrc = pickRandomVideo(currentAnimal);
+  }
+  if(animalVideo.getAttribute('src') !== currentVideoSrc){
+    animalVideo.src = currentVideoSrc;
     animalVideo.muted = true;
     animalVideo.loop = true;
     animalVideo.playsInline = true;
@@ -82,7 +127,7 @@ function placeAt(clientX, clientY){
   stage.style.left = `${clientX}px`;
   stage.style.top = `${clientY}px`;
   stage.classList.remove('hidden');
-  if(currentMode === 'video') prepareVideo();
+  if(currentMode === 'video') prepareVideo(true);
   setMessage(`${animals[currentAnimal].name}이/가 보금자리에 나타났어요.`);
 }
 
@@ -111,29 +156,25 @@ async function startCamera(){
   }
 }
 
-// 중요: 카메라는 이 버튼을 눌렀을 때만 시작됩니다. 자동 실행 코드 없음.
 $('#start-button').addEventListener('click', startCamera);
-
 $('#app').addEventListener('pointerdown', (event) => {
   if(!cameraStarted) return;
   if(event.target.closest('button')) return;
   placeAt(event.clientX, event.clientY);
 });
-
 document.querySelectorAll('.animal-btn').forEach(btn => btn.addEventListener('click', () => setAnimal(btn.dataset.animal)));
 document.querySelectorAll('.mode-btn').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
-$('#center-button').addEventListener('click', centerAnimal);
+$('#center-button').addEventListener('click', () => centerAnimal());
 $('#hide-animal').addEventListener('click', () => {
   stage.classList.add('hidden');
   animalVideo.pause();
   setMessage('동물을 숨겼어요. 작품 위를 다시 터치하면 나타나요.');
 });
-$('#bigger').addEventListener('click', () => { scale = Math.min(scale + 0.15, 2.3); stage.style.width = `${42 * scale}vw`; });
-$('#smaller').addEventListener('click', () => { scale = Math.max(scale - 0.15, 0.5); stage.style.width = `${42 * scale}vw`; });
+$('#bigger').addEventListener('click', () => { scale = Math.min(scale + 0.15, 2.3); applyDefaultSize(); });
+$('#smaller').addEventListener('click', () => { scale = Math.max(scale - 0.15, 0.5); applyDefaultSize(); });
 $('#fit-toggle').addEventListener('click', () => {
   camera.classList.toggle('cover');
   $('#fit-toggle').textContent = camera.classList.contains('cover') ? '전체보기' : '꽉채우기';
   setMessage(camera.classList.contains('cover') ? '화면을 꽉 채워요. 가장자리는 조금 잘릴 수 있어요.' : '카메라 전체가 보이도록 했어요. 검은 여백이 생길 수 있어요.');
 });
-
 Object.values(animals).forEach(animal => { const img = new Image(); img.src = animal.image; });
