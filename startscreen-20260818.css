@@ -1,0 +1,46 @@
+:root{
+  --deep:#173c2d;
+  --leaf:#397050;
+  --cream:#fffaf0;
+  --app-height:100dvh;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;-webkit-user-select:none;user-select:none;touch-action:none}
+#app{position:fixed;inset:0;width:100vw;height:var(--app-height);overflow:hidden;background:#000}
+#camera{position:fixed;inset:0;width:100vw;height:var(--app-height);object-fit:contain;background:#000;z-index:1;display:none}
+#camera.on{display:block}
+#camera.cover{object-fit:cover}
+#start-screen{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px;background:linear-gradient(150deg,#e4f1dd 0%,#f7f1d8 100%);color:#1b2a21;text-align:center}
+.start-card{width:min(520px,100%);display:grid;justify-items:center;gap:14px}
+.leaf-mark{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;background:#cee4c7;font-size:32px;box-shadow:0 8px 20px rgba(34,71,39,.15)}
+.eyebrow{margin:0;color:var(--leaf);font-size:13px;font-weight:900;letter-spacing:.08em}
+h1{margin:0;font-size:clamp(25px,8vw,42px);line-height:1.18;letter-spacing:-.05em;word-break:keep-all}
+.intro{margin:0;max-width:360px;color:#52655b;font-size:14px;line-height:1.55;word-break:keep-all}
+.tiny{margin:0;color:#647568;font-size:12px;line-height:1.4}
+button{border:0;border-radius:999px;font-weight:900;font-family:inherit;box-shadow:0 5px 14px rgba(0,0,0,.16)}
+#start-button{width:min(315px,calc(100vw - 44px));min-height:58px;background:var(--deep);color:white;font-size:18px}
+#topbar,#controls,#bottom-guide{position:fixed;z-index:20}
+#topbar{top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));display:flex;align-items:center;justify-content:space-between;gap:8px;pointer-events:none}
+.title{max-width:calc(100vw - 116px);padding:8px 12px;border-radius:999px;background:rgba(23,60,45,.90);color:white;font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 4px 13px rgba(0,0,0,.18)}
+#fit-toggle{pointer-events:auto;padding:8px 12px;background:rgba(255,255,255,.92);color:var(--deep);font-size:12px}
+#controls{top:max(56px,calc(env(safe-area-inset-top) + 56px));left:10px;right:10px;display:grid;gap:8px;justify-items:center;pointer-events:none}
+.animal-row,.mode-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;pointer-events:auto}
+.animal-btn,.mode-btn,#center-button{padding:9px 11px;background:rgba(255,255,255,.92);color:var(--deep);font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.animal-btn.selected,.mode-btn.selected{background:var(--deep);color:white}
+#center-button{background:#fff2bd;color:#5a4200}
+#stage{position:fixed;left:50%;top:50%;width:42vw;max-width:280px;min-width:110px;transform:translate(-50%,-50%);z-index:8;pointer-events:none;filter:drop-shadow(0 10px 12px rgba(0,0,0,.32))}
+#animal-image,#animal-video{display:block;width:100%;height:auto;object-fit:contain;background:transparent}
+#animal-video{display:none}
+#stage.video-mode #animal-image{display:none}
+#stage.video-mode #animal-video{display:block}
+#bottom-guide{left:10px;right:10px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;gap:8px;justify-items:center;pointer-events:none}
+#message{margin:0;width:min(92vw,520px);padding:10px 14px;border-radius:16px;background:rgba(23,60,45,.88);color:#fff;text-align:center;font-size:13px;font-weight:800;line-height:1.35;word-break:keep-all;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.size-row{display:flex;gap:8px;pointer-events:auto}
+.size-row button{padding:10px 14px;background:rgba(255,255,255,.92);color:var(--deep);font-size:13px}
+.hidden{display:none!important}
+@media (orientation:landscape){
+  #controls{top:max(48px,calc(env(safe-area-inset-top) + 48px));left:auto;right:max(10px,env(safe-area-inset-right));width:260px;justify-items:end}
+  .animal-row,.mode-row{justify-content:flex-end}
+  #bottom-guide{left:max(10px,env(safe-area-inset-left));right:auto;width:360px;justify-items:start}
+  #message{text-align:left}
+}
