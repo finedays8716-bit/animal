@@ -84,7 +84,14 @@ function showAnimal(key){
 startButton.addEventListener('click',async()=>{
   await warmUpVideos();
   startScreen.classList.add('hidden');
-  setStatus('카메라를 허용하고 작품에 붙인 AR 표찰을 비춰 주세요.',false);
+  setStatus('카메라를 준비하고 있어요. 잠시 후 수정마커를 비춰 주세요.',false);
+  // Some Android Chrome / A-Frame combinations wait for the default enter-VR button gesture.
+  // The visible button above now triggers the same gesture automatically.
+  setTimeout(()=>{
+    const btn=document.querySelector('.a-enter-vr-button, .a-enter-ar-button, .a-enter-vr button, .a-enter-ar button');
+    if(btn){ try{ btn.click(); }catch(e){ console.warn('enter button click failed', e); } }
+    setStatus('수정마커의 검은 네모를 화면 가운데에 크게 맞춰 주세요.',false);
+  },350);
 });
 
 $('#help-button').addEventListener('click',()=>{helpPanel.classList.toggle('hidden');animalCard.classList.add('hidden');});
@@ -110,3 +117,13 @@ window.addEventListener('error',(event)=>{
     setStatus('카메라를 사용할 수 없어요. 브라우저 권한과 HTTPS 주소를 확인해 주세요.',false);
   }
 });
+
+
+// Extra debug messages: helpful when marker recognition is failing.
+setTimeout(()=>{
+  const scene=document.querySelector('a-scene');
+  if(scene){
+    scene.addEventListener('camera-init',()=>setStatus('카메라가 켜졌어요. 수정마커를 비춰 주세요.',false));
+    scene.addEventListener('camera-error',()=>setStatus('카메라 오류가 있어요. Chrome 카메라 권한을 확인해 주세요.',false));
+  }
+},100);
