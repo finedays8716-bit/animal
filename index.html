@@ -2,79 +2,56 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#173c2d" />
-  <title>멸종위기동물 AR 안정형</title>
-  <link rel="stylesheet" href="style.css?v=20260818-common-stable" />
-  <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.6.0/dist/aframe-master.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.8/aframe/build/aframe-ar.js"></script>
+  <title>멸종위기동물 보금자리 카메라 합성</title>
+  <link rel="stylesheet" href="style.css?v=20260818-overlay" />
 </head>
 <body>
-  <main id="app-shell">
-    <section id="start-screen" class="overlay-card" aria-live="polite">
+  <main id="app">
+    <video id="camera" autoplay muted playsinline webkit-playsinline></video>
+
+    <section id="start-screen" class="panel start">
       <div class="leaf-mark">🌿</div>
-      <p class="eyebrow">안정형 AR 보금자리 관찰</p>
-      <h1>동물을 고르고<br />공통마커를 비춰 보세요</h1>
-      <p class="intro-copy">카메라 화면이 잘 나오도록 공통마커 1개로 단순화했어요.<br />먼저 사진 모드로 인식 확인 후, 영상 모드를 켜세요.</p>
-      <div class="select-row start-select" role="group" aria-label="동물 선택">
-        <button class="animal-btn active" type="button" data-select="bear">반달가슴곰</button>
-        <button class="animal-btn" type="button" data-select="deer">노루</button>
-        <button class="animal-btn" type="button" data-select="otter">수달</button>
-      </div>
+      <p class="eyebrow">카메라 보금자리 관찰</p>
+      <h1>동물 보금자리를 비추고<br>화면을 터치해 보세요</h1>
+      <p class="intro">마커 인식 없이 카메라 화면 위에 동물이 나타나는 안정형 버전입니다.</p>
       <button id="start-button" type="button">카메라 시작</button>
-      <p class="tiny-note">기존 동물별 표찰 말고, 새 공통마커 PDF를 출력해 사용하세요.</p>
+      <p class="tiny">Chrome에서 열고 카메라 권한을 허용해 주세요.</p>
     </section>
 
-    <header id="hud" aria-live="polite">
-      <div class="hud-title">멸종위기동물 보금자리 관찰</div>
-      <div id="status-pill">동물을 고른 뒤 공통마커를 비춰 주세요.</div>
+    <header id="topbar" class="hidden">
+      <div class="title">멸종위기동물 보금자리 관찰</div>
+      <button id="fit-toggle" type="button">전체보기</button>
     </header>
 
-    <section id="controls" class="control-panel">
-      <div class="select-row" role="group" aria-label="동물 선택">
-        <button class="animal-btn active" type="button" data-select="bear">곰</button>
-        <button class="animal-btn" type="button" data-select="deer">노루</button>
-        <button class="animal-btn" type="button" data-select="otter">수달</button>
+    <section id="controls" class="hidden">
+      <div class="animal-row" role="group" aria-label="동물 선택">
+        <button class="animal-btn selected" type="button" data-animal="bear">반달가슴곰</button>
+        <button class="animal-btn" type="button" data-animal="deer">노루</button>
+        <button class="animal-btn" type="button" data-animal="otter">수달</button>
       </div>
-      <button id="mode-button" type="button">사진 모드</button>
+      <div class="mode-row" role="group" aria-label="표시 방식">
+        <button class="mode-btn selected" type="button" data-mode="image">사진 모드</button>
+        <button class="mode-btn" type="button" data-mode="video">영상 모드</button>
+        <button id="center-button" type="button">가운데 띄우기</button>
+      </div>
     </section>
 
-    <section id="animal-card" class="animal-card hidden" aria-live="polite">
-      <h2 id="animal-name">반달가슴곰</h2>
-      <p id="animal-message"></p>
+    <div id="stage" class="hidden" aria-label="동물 표시 영역">
+      <img id="animal-image" alt="선택한 동물" draggable="false" />
+      <video id="animal-video" muted loop playsinline webkit-playsinline></video>
+    </div>
+
+    <section id="bottom-guide" class="hidden">
+      <p id="message">동물을 선택한 뒤, 작품 속 보금자리 위치를 화면에서 터치하세요.</p>
+      <div class="size-row">
+        <button id="smaller" type="button">작게</button>
+        <button id="bigger" type="button">크게</button>
+        <button id="hide-animal" type="button">숨기기</button>
+      </div>
     </section>
-
-    <div id="scan-guide" class="scan-guide">공통마커를 화면 가운데에 크게 맞춰 주세요</div>
-    <button id="manual-enter" class="manual-enter" type="button">카메라가 멈추면 여기를 한 번 누르세요</button>
-
-    <a-scene id="ar-scene"
-      embedded
-      vr-mode-ui="enabled: true"
-      renderer="antialias: false; alpha: true; precision: mediump; logarithmicDepthBuffer: false;"
-      arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; detectionMode: mono; maxDetectionRate: 30; canvasWidth: 640; canvasHeight: 480;">
-      <a-assets timeout="3000">
-        <img id="img-bear" src="assets/animals/bear.png" crossorigin="anonymous" />
-        <img id="img-deer" src="assets/animals/deer.png" crossorigin="anonymous" />
-        <img id="img-otter" src="assets/animals/otter.png" crossorigin="anonymous" />
-        <video id="video-bear" src="assets/videos/bear.webm" loop muted playsinline webkit-playsinline preload="metadata" crossorigin="anonymous"></video>
-        <video id="video-deer" src="assets/videos/deer.webm" loop muted playsinline webkit-playsinline preload="metadata" crossorigin="anonymous"></video>
-        <video id="video-otter" src="assets/videos/otter.webm" loop muted playsinline webkit-playsinline preload="metadata" crossorigin="anonymous"></video>
-      </a-assets>
-
-      <a-marker id="main-marker" preset="hiro" emitevents="true" smooth="true" smooth-count="5" smooth-tolerance="0.02" smooth-threshold="3">
-        <a-entity id="animal-root" position="0 0.28 0">
-          <a-plane id="animal-image" src="#img-bear" width="1.05" height="1.0" position="0 0.55 0"
-            material="shader: flat; transparent: true; alphaTest: 0.05; side: double"
-            animation__float="property: position; from: 0 0.52 0; to: 0 0.60 0; dir: alternate; dur: 1300; loop: true; easing: easeInOutSine"></a-plane>
-          <a-plane id="animal-video" visible="false" width="1.05" height="1.0" position="0 0.55 0"
-            material="shader: flat; transparent: true; alphaTest: 0.05; side: double"></a-plane>
-          <a-circle radius="0.32" position="0 0.03 0" rotation="-90 0 0" material="color: #000; opacity: 0.16"></a-circle>
-          <a-text id="marker-label" value="반달가슴곰" align="center" width="2.8" color="#173c2d" position="0 -0.14 0"></a-text>
-        </a-entity>
-      </a-marker>
-      <a-entity camera></a-entity>
-    </a-scene>
   </main>
-  <script src="app.js?v=20260818-common-stable"></script>
+  <script src="app.js?v=20260818-overlay"></script>
 </body>
 </html>

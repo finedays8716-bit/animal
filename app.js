@@ -1,14 +1,175 @@
-function syncViewportHeight(){const h=window.visualViewport?.height||window.innerHeight;document.documentElement.style.setProperty('--app-height',`${Math.round(h)}px`)}syncViewportHeight();addEventListener('resize',syncViewportHeight);addEventListener('orientationchange',()=>setTimeout(syncViewportHeight,180));window.visualViewport?.addEventListener('resize',syncViewportHeight);
-const animals={bear:{name:'반달가슴곰',img:'#img-bear',video:'video-bear',w:1.12,h:1.0,msg:'조용하고 깨끗한 숲이 나의 집이에요.'},deer:{name:'노루',img:'#img-deer',video:'video-deer',w:.88,h:1.0,msg:'풀과 나무가 있는 안전한 숲이 좋아요.'},otter:{name:'수달',img:'#img-otter',video:'video-otter',w:.72,h:1.0,msg:'맑은 물과 안전한 물가가 필요해요.'}};
-const $=s=>document.querySelector(s);let selected='bear';let videoMode=false;let markerVisible=false;
-const status=$('#status-pill'), start=$('#start-screen'), imagePlane=$('#animal-image'), videoPlane=$('#animal-video'), label=$('#marker-label'), card=$('#animal-card');
-function setStatus(t){status.textContent=t}function stopVideos(){Object.values(animals).forEach(a=>{const v=document.getElementById(a.video);if(v){v.pause();}})}
-function updateButtons(){document.querySelectorAll('[data-select]').forEach(b=>b.classList.toggle('active',b.dataset.select===selected))}
-function applyAnimal(){const a=animals[selected];label.setAttribute('value',a.name);imagePlane.setAttribute('src',a.img);imagePlane.setAttribute('width',a.w);imagePlane.setAttribute('height',a.h);videoPlane.setAttribute('width',a.w);videoPlane.setAttribute('height',a.h);$('#animal-name').textContent=a.name;$('#animal-message').textContent=a.msg;updateButtons();if(markerVisible)showSelected();}
-async function showSelected(){const a=animals[selected];card.classList.remove('hidden');label.setAttribute('value',a.name);if(videoMode){imagePlane.setAttribute('visible','false');videoPlane.setAttribute('visible','true');videoPlane.setAttribute('src','#'+a.video);stopVideos();const v=document.getElementById(a.video);try{v.currentTime=0;await v.play();setStatus(`${a.name} 영상이 나타났어요.`)}catch(e){console.warn(e);videoMode=false;$('#mode-button').textContent='사진 모드';imagePlane.setAttribute('visible','true');videoPlane.setAttribute('visible','false');setStatus(`${a.name} 사진 모드로 나타났어요. 영상은 기기가 버거울 수 있어요.`)}}else{stopVideos();videoPlane.setAttribute('visible','false');imagePlane.setAttribute('visible','true');setStatus(`${a.name}이 나타났어요. 화면이 안정되면 영상 모드를 켜 보세요.`)}}
-document.querySelectorAll('[data-select]').forEach(b=>b.addEventListener('click',()=>{selected=b.dataset.select;applyAnimal();setStatus(`${animals[selected].name} 선택됨. 공통마커를 비춰 주세요.`)}));
-$('#mode-button').addEventListener('click',()=>{videoMode=!videoMode;$('#mode-button').textContent=videoMode?'영상 모드':'사진 모드';if(markerVisible)showSelected();else setStatus(videoMode?'영상 모드 선택됨. 공통마커를 비춰 주세요.':'사진 모드 선택됨. 공통마커를 비춰 주세요.')});
-function enterAR(){const btn=document.querySelector('.a-enter-vr-button, .a-enter-ar-button, .a-enter-vr button, .a-enter-ar button');if(btn){try{btn.click()}catch(e){console.warn(e)}}}
-$('#start-button').addEventListener('click',()=>{start.classList.add('hidden');setStatus('카메라가 켜지면 공통마커를 화면 가운데에 크게 비춰 주세요.');setTimeout(enterAR,250)});$('#manual-enter').addEventListener('click',()=>{enterAR();setStatus('공통마커를 화면 가운데에 크게 비춰 주세요.')});
-const marker=$('#main-marker');marker.addEventListener('markerFound',()=>{markerVisible=true;showSelected()});marker.addEventListener('markerLost',()=>{markerVisible=false;card.classList.add('hidden');stopVideos();setStatus('공통마커를 다시 화면 가운데에 맞춰 주세요.')});
-setTimeout(()=>{const scene=$('a-scene');if(scene){scene.addEventListener('camera-init',()=>setStatus('카메라가 켜졌어요. 공통마커를 비춰 주세요.'));scene.addEventListener('camera-error',()=>setStatus('카메라 오류예요. Chrome 카메라 권한을 확인해 주세요.'))}},100);applyAnimal();
+function syncViewportHeight(){
+  const h = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${Math.round(h)}px`);
+}
+syncViewportHeight();
+window.addEventListener('resize', syncViewportHeight);
+window.visualViewport?.addEventListener('resize', syncViewportHeight);
+window.addEventListener('orientationchange', () => setTimeout(syncViewportHeight, 250));
+
+const animals = {
+  bear: {
+    name: '반달가슴곰',
+    image: 'assets/animals/bear.png',
+    video: 'assets/videos/bear.webm',
+    message: '반달가슴곰이 살 숲 위를 터치해 보세요.'
+  },
+  deer: {
+    name: '노루',
+    image: 'assets/animals/deer.png',
+    video: 'assets/videos/deer.webm',
+    message: '노루가 쉴 풀밭이나 숲 위를 터치해 보세요.'
+  },
+  otter: {
+    name: '수달',
+    image: 'assets/animals/otter.png',
+    video: 'assets/videos/otter.webm',
+    message: '수달이 살 물가나 강 위를 터치해 보세요.'
+  }
+};
+
+const $ = (selector) => document.querySelector(selector);
+const camera = $('#camera');
+const startScreen = $('#start-screen');
+const topbar = $('#topbar');
+const controls = $('#controls');
+const bottomGuide = $('#bottom-guide');
+const stage = $('#stage');
+const animalImage = $('#animal-image');
+const animalVideo = $('#animal-video');
+const message = $('#message');
+
+let currentAnimal = 'bear';
+let currentMode = 'image';
+let scale = 1;
+let stream = null;
+let placed = false;
+
+function setMessage(text){ message.textContent = text; }
+
+function setAnimal(key){
+  currentAnimal = key;
+  const data = animals[key];
+  animalImage.src = data.image;
+  animalImage.alt = data.name;
+  animalVideo.pause();
+  animalVideo.removeAttribute('src');
+  animalVideo.load();
+  stage.classList.remove('video-mode');
+  if(currentMode === 'video') prepareVideo();
+  setMessage(`${data.name} 선택됨. ${data.message}`);
+  document.querySelectorAll('.animal-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.animal === key));
+}
+
+function setMode(mode){
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.mode === mode));
+  if(mode === 'video'){
+    prepareVideo();
+    stage.classList.add('video-mode');
+    setMessage('영상 모드입니다. 화면이 버벅이면 사진 모드로 바꾸세요.');
+  } else {
+    animalVideo.pause();
+    stage.classList.remove('video-mode');
+    setMessage(`${animals[currentAnimal].name} 사진 모드입니다. 작품 위를 터치하세요.`);
+  }
+}
+
+function prepareVideo(){
+  const data = animals[currentAnimal];
+  if(animalVideo.getAttribute('src') !== data.video){
+    animalVideo.src = data.video;
+    animalVideo.muted = true;
+    animalVideo.loop = true;
+    animalVideo.playsInline = true;
+    animalVideo.setAttribute('playsinline', '');
+    animalVideo.setAttribute('webkit-playsinline', '');
+    animalVideo.load();
+  }
+  animalVideo.play().catch(() => {
+    setMessage('영상 재생이 무거우면 사진 모드를 사용하세요.');
+  });
+}
+
+function placeAt(clientX, clientY){
+  const controlRect = controls.getBoundingClientRect();
+  const bottomRect = bottomGuide.getBoundingClientRect();
+  if(clientY < controlRect.bottom + 6 || clientY > bottomRect.top - 6) return;
+  stage.style.left = `${clientX}px`;
+  stage.style.top = `${clientY}px`;
+  stage.classList.remove('hidden');
+  placed = true;
+  if(currentMode === 'video') prepareVideo();
+  setMessage(`${animals[currentAnimal].name}이/가 보금자리에 나타났어요.`);
+}
+
+function centerAnimal(){
+  placeAt(window.innerWidth / 2, window.innerHeight / 2);
+}
+
+async function startCamera(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+    camera.srcObject = stream;
+    await camera.play();
+    startScreen.classList.add('hidden');
+    topbar.classList.remove('hidden');
+    controls.classList.remove('hidden');
+    bottomGuide.classList.remove('hidden');
+    setAnimal(currentAnimal);
+    setMode('image');
+  }catch(error){
+    console.error(error);
+    setMessage('카메라를 열 수 없어요. Chrome 권한과 HTTPS 주소를 확인해 주세요.');
+    alert('카메라를 열 수 없어요. Chrome 카메라 권한을 확인해 주세요.');
+  }
+}
+
+$('#start-button').addEventListener('click', startCamera);
+
+$('#app').addEventListener('pointerdown', (event) => {
+  if(startScreen && !startScreen.classList.contains('hidden')) return;
+  if(event.target.closest('button')) return;
+  placeAt(event.clientX, event.clientY);
+});
+
+document.querySelectorAll('.animal-btn').forEach(btn => {
+  btn.addEventListener('click', () => setAnimal(btn.dataset.animal));
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => setMode(btn.dataset.mode));
+});
+
+$('#center-button').addEventListener('click', centerAnimal);
+$('#hide-animal').addEventListener('click', () => {
+  stage.classList.add('hidden');
+  placed = false;
+  animalVideo.pause();
+  setMessage('동물을 숨겼어요. 작품 위를 다시 터치하면 나타나요.');
+});
+
+$('#bigger').addEventListener('click', () => {
+  scale = Math.min(scale + 0.15, 2.3);
+  stage.style.width = `${42 * scale}vw`;
+});
+$('#smaller').addEventListener('click', () => {
+  scale = Math.max(scale - 0.15, 0.5);
+  stage.style.width = `${42 * scale}vw`;
+});
+
+$('#fit-toggle').addEventListener('click', () => {
+  camera.classList.toggle('cover');
+  $('#fit-toggle').textContent = camera.classList.contains('cover') ? '꽉채우기' : '전체보기';
+  setMessage(camera.classList.contains('cover') ? '화면을 꽉 채워 보여요. 가장자리는 조금 잘릴 수 있어요.' : '카메라 전체가 보이도록 바꿨어요. 검은 여백이 생길 수 있어요.');
+});
+
+// initial preload for image fallback only
+Object.values(animals).forEach(animal => { const img = new Image(); img.src = animal.image; });
